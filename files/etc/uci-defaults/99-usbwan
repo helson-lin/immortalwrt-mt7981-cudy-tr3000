@@ -1,0 +1,25 @@
+#!/bin/sh
+
+WAN_ZONE_INDEX="$(uci -q show firewall | sed -n "s/^firewall\.@zone\[\([0-9]\+\)\]\.name='wan'$/\1/p" | head -n1)"
+
+if ! uci -q get network.usbwan >/dev/null; then
+	uci -q batch <<'EOF'
+set network.usbwan='interface'
+set network.usbwan.proto='dhcp'
+set network.usbwan.metric='10'
+commit network
+EOF
+fi
+
+if [ -n "$WAN_ZONE_INDEX" ]; then
+	WAN_NETWORKS="$(uci -q get firewall.@zone[$WAN_ZONE_INDEX].network)"
+	case " $WAN_NETWORKS " in
+		*" usbwan "*) ;;
+		*)
+			uci -q add_list firewall.@zone[$WAN_ZONE_INDEX].network='usbwan'
+			uci commit firewall
+		;;
+	esac
+fi
+
+exit 0

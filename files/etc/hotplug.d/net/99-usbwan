@@ -1,0 +1,46 @@
+#!/bin/sh
+
+[ "$ACTION" = "add" ] || exit 0
+[ -n "$INTERFACE" ] || exit 0
+[ -d "/sys/class/net/$INTERFACE" ] || exit 0
+
+case "$INTERFACE" in
+	lo|br-*|docker*|ifb*|imq*|lan|wan|veth*)
+		exit 0
+	;;
+esac
+
+DEVICE_PATH="$(readlink -f "/sys/class/net/$INTERFACE/device" 2>/dev/null)"
+case "$DEVICE_PATH" in
+	*/usb*|*/usb/*) ;;
+	*) exit 0 ;;
+esac
+
+CURRENT_DEVICE="$(uci -q get network.usbwan.device)"
+[ "$CURRENT_DEVICE" = "$INTERFACE" ] && exit 0
+
+uci -q batch <<EOF
+set network.usbwan='interface'
+set network.usbwan.proto='dhcp'
+set network.usbwan.device='$INTERFACE'
+set network.usbwan.metric='10'
+commit network
+EOF
+
+WAN_ZONE_INDEX="$(uci -q show firewall | sed -n "s/^firewall\.@zone\[\([0-9]\+\)\]\.name='wan'$/\1/p" | head -n1)"
+if [ -n "$WAN_ZONE_INDEX" ]; then
+	WAN_NETWORKS="$(uci -q get firewall.@zone[$WAN_ZONE_INDEX].network)"
+	case " $WAN_NETWORKS " in
+		*" usbwan "*) ;;
+		*)
+			uci -q add_list firewall.@zone[$WAN_ZONE_INDEX].network='usbwan'
+			uci commit firewall
+		;;
+	esac
+fi
+
+/etc/init.d/network reload >/dev/null 2>&1
+/etc/init.d/firewall reload >/dev/null 2>&1
+logger -t usbwan-auto "configured usbwan on $INTERFACE"
+
+exit 0

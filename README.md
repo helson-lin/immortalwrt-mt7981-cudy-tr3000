@@ -55,7 +55,7 @@ echo 1 > /sys/class/gpio/modem_power/value
 
 ## 第三方软件包
 
-- [OpenClash](https://github.com/vernesong/OpenClash)
+- [luci-app-daed](https://github.com/QiuSimons/luci-app-daed)
 - [Bandix](https://github.com/timsaya/luci-app-bandix)
 - [luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora)
 - [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config)
@@ -64,6 +64,8 @@ echo 1 > /sys/class/gpio/modem_power/value
 - kmod-usb-net-cdc-ether
 - kmod-usb-net-rndis
 - kmod-mtd-rw
+
+默认启用 `daed` 所需的 BTF/eBPF/XDP 内核选项，并在首次启动时预创建 `usbwan` 接口；当检测到 USB 网卡插入时，会自动把该设备绑定到 `usbwan` 并加入 `wan` 防火墙域。
 
 ---
 
