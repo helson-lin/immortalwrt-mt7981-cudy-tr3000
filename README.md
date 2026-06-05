@@ -67,6 +67,8 @@ echo 1 > /sys/class/gpio/modem_power/value
 
 默认启用 `daed` 所需的 BTF/eBPF/XDP 内核选项，并在首次启动时预创建 `usbwan` 接口；当检测到 USB 网卡插入时，会自动把该设备绑定到 `usbwan` 并加入 `wan` 防火墙域。
 
+仓库中的 `daed` 已改为预编译接入：编译时直接复用上游发布的 ARM64 `ipk` 内容，并由当前固件重新封装，避免在 GitHub Actions 中现编 `Go + Node + eBPF` 全量依赖。
+
 ---
 
 ## SSH 连接 Action
@@ -78,6 +80,8 @@ echo 1 > /sys/class/gpio/modem_power/value
 ## 编译注意事项
 
 GitHub Actions 存储有限，大型软件包（如 sing-box 或 alist）建议使用预编译方式，而不是源码编译，即在编译过程中加入已经编译好现成软件包。否则你应该会碰到超长编译时间 + 超出 Action 储存。示例：
+
+本仓库当前的 `daed` 就按这个思路处理，不再在 Action 中执行上游 `luci-app-daed` 的完整源码构建链。
 
 ```sh
 # 创建存储二进制文件的目录
