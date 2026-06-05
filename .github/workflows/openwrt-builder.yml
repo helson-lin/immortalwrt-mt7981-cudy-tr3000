@@ -234,8 +234,8 @@ jobs:
             make download -j$(nproc)
             
             # 5. 开始编译
-            # 使用 ccache 加速，并保留 Toolchain
-            if ! make -j$(nproc) CC="ccache gcc" CXX="ccache g++"; then
+            # 让 OpenWrt 自己选择 host/target/BPF 编译器，避免全局 CC/CXX 覆盖破坏 LLVM/BPF 工具链检测。
+            if ! make -j$(nproc); then
               echo "⚠️ Multi-threaded failed, retrying single-threaded..."
               make -j1 V=s || exit 1
             fi
